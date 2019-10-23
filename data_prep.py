@@ -14,6 +14,7 @@ class Password:
     n_letters = len(all_letters) + 1 # Plus EOS marker
     default_txt_file_path = 'data/rockyou.txt'
     default_json_file_path = 'data/rockyou_cleaned.json'
+    pointer = 0
     
     def __init__(self, txt_file_path = default_txt_file_path, json_file_path = default_json_file_path, update_all = False):
         logging.info("Initializing passwords...")
@@ -44,6 +45,10 @@ class Password:
     
     def getPasswords(self):
         return self.passwords_string
+    
+    def poopPassword(self):
+        self.pointer = self.pointer + 1
+        return self.passwords_string[self.pointer - 1]
 
     # Turn a Unicode string to plain ASCII, thanks to https://stackoverflow.com/a/518232/2809427
     @staticmethod
