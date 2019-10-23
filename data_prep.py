@@ -46,9 +46,12 @@ class Password:
     def getPasswords(self):
         return self.passwords_string
     
-    def poopPassword(self):
+    def next(self):
         self.pointer = self.pointer + 1
         return self.passwords_string[self.pointer - 1]
+    
+    def passIter(self):
+        return iter(self.passwords_string)
 
     # Turn a Unicode string to plain ASCII, thanks to https://stackoverflow.com/a/518232/2809427
     @staticmethod
