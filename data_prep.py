@@ -14,7 +14,6 @@ class Password:
     n_letters = len(all_letters) + 1 # Plus EOS marker
     default_txt_file_path = 'data/rockyou.txt'
     default_json_file_path = 'data/rockyou_cleaned.json'
-    pointer = 0
     
     def __init__(self, txt_file_path = default_txt_file_path, json_file_path = default_json_file_path, update_all = False):
         logging.info("Initializing passwords...")
@@ -45,10 +44,6 @@ class Password:
     
     def getPasswords(self):
         return self.passwords_string
-    
-    def next(self):
-        self.pointer = self.pointer + 1
-        return self.passwords_string[self.pointer - 1]
     
     def passIter(self):
         return iter(self.passwords_string)
@@ -81,19 +76,14 @@ class Password:
         return Password.all_letters.find(letter)
 
     @staticmethod
-    def passToTensor(passwords):
-        tensors = []
-        for password in passwords:
-            tensor = torch.zeros(len(password) + 1, 1, Password.n_letters)
-            tensor[-1][0][-1] = 1
-            for i, letter in enumerate(password):
-                tensor[i][0][Password.letterToIndex(letter)] = 1
-            tensors.append(tensor)
-        return tensors
+    def letterToTensor(letter):
+        tensor = torch.zeros(1, 1, Password.n_letters)
+        tensor[0][0][Password.letterToIndex(letter)] = 1
+        return tensor
     
     @staticmethod
     def passwordToInputTensor(password):
-        tensor = torch.zeros(len(password), 1, Password.n_letters)
+        tensor = torch.zeros(len(password), 1, Password.n_letters + 1)
         for i, letter in enumerate(password):
             tensor[i][0][Password.letterToIndex(letter)] = 1
         return tensor
@@ -104,3 +94,12 @@ class Password:
         target = [Password.all_letters.find(password[i]) for i in range(1, len(password))]
         target.append(Password.n_letters - 1)
         return torch.LongTensor(target)
+    
+    @staticmethod
+    def zeroPadding(tensor, length):
+        assert length > tensor.size()[0]
+        zero_tensor = torch.zeros(1, 1, Password.n_letters + 1)
+        zero_tensor[0][0][-1] = 1
+        while length > tensor.size()[0]:
+            tensor = torch.cat((tensor, zero_tensor), -3)
+        return tensor
