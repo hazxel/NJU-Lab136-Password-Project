@@ -6,6 +6,9 @@ import json
 import os
 import torch
 import logging
+import random
+from torch.nn import utils as nn_utils
+from config import *
 
 
 
@@ -32,21 +35,41 @@ class Password:
             self.passwords_string = Password.readPass(self.txt_file_path)
 
             logging.debug("Deleting empty passwords...")
-            self.passwords_string = Password.deleteSpace(self.passwords_string)
+            self.passwords_string = Password.deleteEmpty(self.passwords_string)
         
             logging.debug("Saving to json file...")
             with open(json_file_path, 'w',encoding='utf-8') as pas:
                 json.dump(self.passwords_string, pas, ensure_ascii = True)
             
-        logging.info("Done initializing passwords.")
         #logging.debug("Converting string to tensor...")
         #self.passwords_tensor = Password.passToTensor(self.passwords_string)
+        
+        self.string_gen = self.inf_string_gen()
+        logging.info("Done initializing passwords.")
     
     def getPasswords(self):
         return self.passwords_string
     
     def passIter(self):
         return iter(self.passwords_string)
+    
+    def inf_string_gen(self):
+        while True:
+            for i in range(0, len(self.passwords_string) - BATCH_SIZE + 1, BATCH_SIZE):
+                yield self.passwords_string[i : i + BATCH_SIZE]
+            random.shuffle(self.passwords_string)
+            
+    def inf_tensor_pack_gen(self, seq_len):
+        while True:
+            string_batch = self.string_gen.__next__()
+            tensor_in = torch.zeros(BATCH_SIZE, seq_len, CHARMAP_LEN)
+            pwd_len = []
+            for i in range(len(string_batch)):
+                l = len(string_batch[i]) if len(string_batch[i]) <= seq_len else seq_len
+                pwd_len.append(l)
+                for j in range(l):
+                    tensor_in[i][j][Password.letterToIndex(string_batch[i][j])] = 1
+            yield nn_utils.rnn.pack_padded_sequence(tensor_in, pwd_len, batch_first=True, enforce_sorted=False)        
 
     # Turn a Unicode string to plain ASCII, thanks to https://stackoverflow.com/a/518232/2809427
     @staticmethod
@@ -66,7 +89,7 @@ class Password:
         return [Password.unicodeToAscii(password) for password in passwords ]
     
     @staticmethod
-    def deleteSpace(passwords):
+    def deleteEmpty(passwords):
         while("" in passwords):
             passwords.remove("")
         return passwords
@@ -83,9 +106,9 @@ class Password:
     
     @staticmethod
     def passwordToInputTensor(password):
-        tensor = torch.zeros(len(password), 1, Password.n_letters + 1)
+        tensor = torch.zeros(1, len(password), Password.n_letters + 1)
         for i, letter in enumerate(password):
-            tensor[i][0][Password.letterToIndex(letter)] = 1
+            tensor[0][i][Password.letterToIndex(letter)] = 1
         return tensor
     
     # Target Tensor is not one-hot tensor
@@ -103,3 +126,5 @@ class Password:
         while length > tensor.size()[0]:
             tensor = torch.cat((tensor, zero_tensor), -3)
         return tensor
+    
+    
