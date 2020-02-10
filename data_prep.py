@@ -106,9 +106,9 @@ class Password:
     
     @staticmethod
     def passwordToInputTensor(password):
-        tensor = torch.zeros(1, len(password), Password.n_letters + 1)
+        tensor = torch.LongTensor(1, len(password)).zero_().to(device)
         for i, letter in enumerate(password):
-            tensor[0][i][Password.letterToIndex(letter)] = 1
+            tensor[0][i] = Password.letterToIndex(letter)
         return tensor
     
     # Target Tensor is not one-hot tensor

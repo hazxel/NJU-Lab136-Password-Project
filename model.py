@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from config import *
 from data_prep import Password as P
+import random
 
 class Discriminator(nn.Module):
     def __init__(self, hidden_size, num_neurons, layers = 1, dropout = 0, input_size = CHARMAP_LEN, output_size = 1):
@@ -112,6 +113,11 @@ class Generator(nn.Module):
         output = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
         output = self.h2o(output[0])
         output = F.log_softmax(output,dim=2)
+        if output.size()[1] < seq_len:
+            output = torch.cat((
+                output,
+                torch.zeros(BATCH_SIZE, seq_len - output.size()[1], CHARMAP_LEN).to(device)
+            ), dim = 1)
         return output
 
     def initHiddenZeros(self):
@@ -141,22 +147,23 @@ class Generator(nn.Module):
         
         return P.passwordToInputTensor(password)
     
-    def generate_N(self, p, n_generate = 100, max_length = 18):
+    def generate_N(self, p, n_generate = 20, max_length = 18):
         generate_list = []
 
         for i in range(n_generate):
             start_letter = p.passwords_string[random.randint(0,len(p.passwords_string) - 1)][0]
+            input_tensor = P.passwordToInputTensor(start_letter)
             with torch.no_grad():
-                input_tensor = P.passwordToInputTensor(start_letter).to(device)
-                self.hidden = self.initHiddenZeros()
+                hidden = torch.zeros(self.layers, 1, self.hidden_size).to(device)
                 output_password = start_letter
 
                 for c in range(max_length):
-                    output = self(input_tensor[0])
+                    output, _ = self.gru(self.embedding(input_tensor), hidden)
+                    output = self.h2o(output)
                     output = output.view(1,-1)
                     topv, topi = output.topk(1)
                     topi = topi[0][0]
-                    if topi == P.n_letters - 1:
+                    if topi == CHARMAP_LEN - 1:
                         break
                     else:
                         letter = P.all_letters[topi]
