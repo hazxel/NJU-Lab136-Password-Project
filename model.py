@@ -39,7 +39,8 @@ class Discriminator(nn.Module):
     def requiresNoGrad(self):
         for p in self.parameters():
             p.requires_grad = False
-            
+    
+    '''
     def calcGradientPenalty(self, real_data, fake_data, LAMBDA = .5):
         if real_data.size()[0] > fake_data.size()[0]:
             fake_data = P.zeroPadding(fake_data.to(torch.device("cpu")), real_data.size(0)).to(device)
@@ -82,7 +83,7 @@ class Discriminator(nn.Module):
         for i in range(input_tensor.size()[0]):
             output, hidden = self(input_tensor[i], hidden)
         return output
-    
+    '''
     
     
     
@@ -154,7 +155,7 @@ class Generator(nn.Module):
             start_letter = p.passwords_string[random.randint(0,len(p.passwords_string) - 1)][0]
             input_tensor = P.passwordToInputTensor(start_letter)
             with torch.no_grad():
-                hidden = torch.zeros(self.layers, 1, self.hidden_size).to(device)
+                hidden = torch.rand(self.layers, 1, self.hidden_size).to(device)
                 output_password = start_letter
 
                 for c in range(max_length):
@@ -173,7 +174,8 @@ class Generator(nn.Module):
             generate_list.append(output_password)
             
         return generate_list
-
+    
+    '''
     def pre_train(self, input_line_tensor, target_line_tensor):
         target_line_tensor.unsqueeze_(-1)
         self.hidden = self.initHiddenZeros()
@@ -219,7 +221,7 @@ class Generator(nn.Module):
         
         for p in self.parameters():
             p.data.add_(-learning_rate, p.grad.data)
-            
+    '''
             
 def toTensor(strings_in, seq_len, embedding):
         tensor_in = torch.LongTensor(BATCH_SIZE, seq_len+1).zero_().to(device) # +1 because every real pwd has an EOS 

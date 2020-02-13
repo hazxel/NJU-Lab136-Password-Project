@@ -1,3 +1,7 @@
+import torch
+from data_prep import Password as P
+from config import *
+
 def get_train_dis(strings_in, pred, seq_len):
     real, real_sub = get_real(strings_in, seq_len)
     fake = get_fake(real, pred, seq_len)
