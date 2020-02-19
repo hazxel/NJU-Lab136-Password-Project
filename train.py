@@ -10,8 +10,23 @@ from model import Generator, Discriminator
 from training_helper import *
 from config import *
 
+from sys import argv
+
+##############################
+## example usage:           ##
+## python train.py -d -c    ##
+##############################
+
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+if len(argv) > 1 and argv[1] == "-d":
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
+
+if len(argv) > 2 and argv[2] == "-c":
+    TRAIN_FROM_CKPT = True
+else:
+    TRAIN_FROM_CKPT = False
 
 g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE).to(device)
 d = Discriminator(DISC_HIDDEN_SIZE, DISC_NEURON_SIZE).to(device)
@@ -21,8 +36,6 @@ opt_d = torch.optim.RMSprop(d.parameters(), lr=0.0002)
 
 p = P()
 batch_gen = p.string_gen
-
-TRAIN_FROM_CKPT = True
 
 if os.path.isfile(CHECKPOINT_PATH) and TRAIN_FROM_CKPT:
     checkpoint = torch.load(CHECKPOINT_PATH, map_location = device)

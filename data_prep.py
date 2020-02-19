@@ -55,9 +55,10 @@ class Password:
     
     def inf_string_gen(self):
         while True:
+            random.shuffle(self.passwords_string)
             for i in range(0, len(self.passwords_string) - BATCH_SIZE + 1, BATCH_SIZE):
                 yield self.passwords_string[i : i + BATCH_SIZE]
-            random.shuffle(self.passwords_string)
+            logging.info("Current epoch done.")
             
     def inf_tensor_pack_gen(self, seq_len):
         while True:
@@ -117,14 +118,4 @@ class Password:
         target = [Password.all_letters.find(password[i]) for i in range(1, len(password))]
         target.append(Password.n_letters - 1)
         return torch.LongTensor(target)
-    
-    @staticmethod
-    def zeroPadding(tensor, length):
-        assert length > tensor.size()[0]
-        zero_tensor = torch.zeros(1, 1, Password.n_letters + 1)
-        zero_tensor[0][0][-1] = 1
-        while length > tensor.size()[0]:
-            tensor = torch.cat((tensor, zero_tensor), -3)
-        return tensor
-    
     

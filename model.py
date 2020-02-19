@@ -109,16 +109,12 @@ class Generator(nn.Module):
 
     def forward(self, input, seq_len):
         real_ebdd_pack = toTensor(input, seq_len, self.embedding)
-        hidden = self.initHiddenZeros()
+        #hidden = self.initHiddenZeros()
+        hidden = self.initHiddenRand()
         output, _ = self.gru(real_ebdd_pack, hidden)
-        output = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
+        output = nn.utils.rnn.pad_packed_sequence(output, batch_first = True, total_length = seq_len)
         output = self.h2o(output[0])
         output = F.log_softmax(output,dim=2)
-        if output.size()[1] < seq_len:
-            output = torch.cat((
-                output,
-                torch.zeros(BATCH_SIZE, seq_len - output.size()[1], CHARMAP_LEN).to(device)
-            ), dim = 1)
         return output
 
     def initHiddenZeros(self):
@@ -159,7 +155,7 @@ class Generator(nn.Module):
                 output_password = start_letter
 
                 for c in range(max_length):
-                    output, _ = self.gru(self.embedding(input_tensor), hidden)
+                    output, hidden = self.gru(self.embedding(input_tensor), hidden)
                     output = self.h2o(output)
                     output = output.view(1,-1)
                     topv, topi = output.topk(1)
@@ -174,6 +170,33 @@ class Generator(nn.Module):
             generate_list.append(output_password)
             
         return generate_list
+    
+    def pre_train(self, p):
+        passwords = random.sample(p.passwords_string, PRE_GEN_ITERS)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(self.parameters(), lr=0.1)
+        for password in passwords:
+            index = [P.letterToIndex(letter) for letter in password]
+            index.append(CHARMAP_LEN - 1)
+            hidden = torch.rand(self.layers, 1, self.hidden_size).to(device)
+            
+            self.zero_grad()
+            loss = torch.tensor(0, dtype = torch.float32, requires_grad = True, device = device)
+            for j in range(len(password)):
+                tensor_in = torch.LongTensor(1, 1).zero_().to(device)
+                tensor_in[0][0] = index[j]
+                tensor_in = self.embedding(tensor_in)
+                
+                tensor_out, hidden = self.gru(tensor_in, hidden)
+                tensor_out = self.h2o(tensor_out)
+                
+                expected_out = torch.tensor([index[j+1]]).to(device)
+                
+                loss = loss + criterion(tensor_out[0], expected_out)
+                
+            loss.backward()
+            optimizer.step()
+                
     
     '''
     def pre_train(self, input_line_tensor, target_line_tensor):

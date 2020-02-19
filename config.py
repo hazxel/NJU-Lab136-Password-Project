@@ -2,14 +2,15 @@ import torch
 
 USE_CUDA = True
 
-#PRE_GEN_ITERS = 100 # no pre gen now
-ITERS_PER_SEQ_LEN = 20000
+PRE_GEN_ITERS = 100 
+PRE_DISC_ITERS = 100
+ITERS_PER_SEQ_LEN = 2000
 CRITIC_ITERS = 5
 GEN_ITERS = 25
 
 BATCH_SIZE = 16
 
-CHARMAP_LEN = 80 #EOS included (52 + 10 + 17 + 1 = 80)
+CHARMAP_LEN = 80 # EOS included (52 + 10 + 17 + 1 = 80)
 
 MAX_LEN = 18
 MIN_LEN = 4
