@@ -106,6 +106,13 @@ class Password:
         return tensor
     
     @staticmethod
+    def passwordToPretrainTensor(password):
+        tensor = torch.LongTensor(1, len(password), CHARMAP_LEN).zero_().to(device)
+        for i, letter in enumerate(password):
+            tensor[0][i][Password.letterToIndex(letter)] = 1
+        return tensor
+    
+    @staticmethod
     def passwordToInputTensor(password):
         tensor = torch.LongTensor(1, len(password)).zero_().to(device)
         for i, letter in enumerate(password):

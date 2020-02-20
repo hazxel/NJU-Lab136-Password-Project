@@ -39,6 +39,26 @@ class Discriminator(nn.Module):
     def requiresNoGrad(self):
         for p in self.parameters():
             p.requires_grad = False
+            
+    def pre_train(self, p, G):
+        passwords = random.sample(p.passwords_string, PRE_DISC_ITERS)
+        optimizer = torch.optim.SGD(self.parameters(), lr=0.1)
+        for real in passwords:
+            fake = G.generate_from(real[0])
+            fake = P.passwordToPretrainTensor(fake).float()
+            fake = self.embedding(fake)
+            real = P.passwordToPretrainTensor(real).float()
+            real = self.embedding(real)
+            hidden = torch.zeros(self.layers, 1, self.hidden_size).to(device)
+            
+            fake_out, _ = self.gru(fake, hidden) 
+            real_out, _ = self.gru(real, hidden)
+            fake_loss = self.h2o(fake_out[:,-1,:])[0][0]
+            real_loss = -self.h2o(real_out[:,-1,:])[0][0]
+            
+            loss = fake_loss + real_loss
+            loss.backward()
+            optimizer.step()
     
     '''
     def calcGradientPenalty(self, real_data, fake_data, LAMBDA = .5):
@@ -144,11 +164,34 @@ class Generator(nn.Module):
         
         return P.passwordToInputTensor(password)
     
-    def generate_N(self, p, n_generate = 20, max_length = 18):
+    def generate_from(self, start_letter, max_length = MAX_LEN):
+        input_tensor = P.passwordToInputTensor(start_letter)
+        with torch.no_grad():
+            hidden = torch.rand(self.layers, 1, self.hidden_size).to(device)
+            output_password = start_letter
+
+            for c in range(max_length):
+                output, hidden = self.gru(self.embedding(input_tensor), hidden)
+                output = self.h2o(output)
+                output = output.view(1,-1)
+                topv, topi = output.topk(1)
+                topi = topi[0][0]
+                if topi == CHARMAP_LEN - 1:
+                    break
+                else:
+                    letter = P.all_letters[topi]
+                    output_password += letter
+                input_tensor = P.passwordToInputTensor(letter).to(device)
+                                
+        return output_password
+    
+    
+    def generate_N(self, p, n_generate = 20, max_length = MAX_LEN):
         generate_list = []
+        samples = random.sample(p.passwords_string, n_generate)
 
         for i in range(n_generate):
-            start_letter = p.passwords_string[random.randint(0,len(p.passwords_string) - 1)][0]
+            start_letter = samples[i][0]
             input_tensor = P.passwordToInputTensor(start_letter)
             with torch.no_grad():
                 hidden = torch.rand(self.layers, 1, self.hidden_size).to(device)
