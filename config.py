@@ -23,6 +23,7 @@ GEN_HIDDEN_SIZE = 512
 LAMBDA = 10
 
 SAVE_CHECKPOINTS_EVERY = 200
-CHECKPOINT_PATH = './network_checkpoint/gan_checkpoint.pt'
+DEFAULT_CHECKPOINT_PATH = './network_checkpoint/gan_checkpoint.pt'
+DEFAULT_SAMPLE_PATH = './output/sample.json'
 
 device = torch.device("cuda" if torch.cuda.is_available() and USE_CUDA else "cpu")

@@ -11,22 +11,32 @@ from training_helper import *
 from config import *
 
 from sys import argv
+from getopt import getopt
 
-##############################
-## example usage:           ##
-## python train.py -d -c    ##
-##############################
+############################
+## example:          ##
+## python train.py -d -c  ##
+############################
 
 logger = logging.getLogger()
-if len(argv) > 1 and argv[1] == "-d":
-    logger.setLevel(logging.DEBUG)
-else:
-    logger.setLevel(logging.INFO)
+logger.setLevel(logging.INFO)
+checkpoint_path = DEFAULT_CHECKPOINT_PATH
+train_from_ckpt = True
 
-if len(argv) > 2 and argv[2] == "-c":
-    TRAIN_FROM_CKPT = True
-else:
-    TRAIN_FROM_CKPT = False
+opts, args = getopt(argv[1:], "-h-r-l:-c:", ["help", "restart", "logging=", "checkpoint="])
+
+for opt_name, opt_value in opts:
+    if opt_name in ('-h', '--help'):
+        print("Ooops, we don't have help info now :)")
+    if opt_name in ('-r', '--restart'):
+        train_from_ckpt = False
+        logging.info("Restart training from scratch...")
+    if opt_name in ('-l', '--logging'):
+        if opt_value == "debug":
+            logger.setLevel(logging.DEBUG)
+    if opt_name in ('-c', '--checkpoint_path'):
+        checkpoint_path = opt_value    
+    
 
 g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE).to(device)
 d = Discriminator(DISC_HIDDEN_SIZE, DISC_NEURON_SIZE).to(device)
@@ -37,8 +47,8 @@ opt_d = torch.optim.RMSprop(d.parameters(), lr=0.0002)
 p = P()
 batch_gen = p.string_gen
 
-if os.path.isfile(CHECKPOINT_PATH) and TRAIN_FROM_CKPT:
-    checkpoint = torch.load(CHECKPOINT_PATH, map_location = device)
+if os.path.isfile(checkpoint_path) and train_from_ckpt:
+    checkpoint = torch.load(checkpoint_path, map_location = device)
     g.load_state_dict(checkpoint['gen_state_dict'])
     d.load_state_dict(checkpoint['disc_state_dict'])
     g = g.to(device)
@@ -64,7 +74,7 @@ for seq_len in range(start_len, MAX_LEN + 1):
                 'gen_optimizer_state_dict': opt_g.state_dict(),
                 'disc_optimizer_state_dict': opt_d.state_dict(),
                 'iter': i
-                }, CHECKPOINT_PATH)
+                }, checkpoint_path)
             logging.info("  *** Model Saved on Iter " + str(i) + " ***\n")
         
         logging.debug("----------------- %d / %d -----------------\n" % (i, ITERS_PER_SEQ_LEN))

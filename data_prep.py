@@ -11,12 +11,11 @@ from torch.nn import utils as nn_utils
 from config import *
 
 
-
 class Password:
     all_letters = string.ascii_letters + string.digits + ".,?/;:'+-*!@#$%^&"
     n_letters = len(all_letters) + 1 # Plus EOS marker
-    default_txt_file_path = 'data/rockyou.txt'
-    default_json_file_path = 'data/rockyou_cleaned.json'
+    default_txt_file_path = './data/rockyou.txt'
+    default_json_file_path = './data/rockyou_cleaned.json'
     
     def __init__(self, txt_file_path = default_txt_file_path, json_file_path = default_json_file_path, update_all = False):
         logging.info("Initializing passwords...")

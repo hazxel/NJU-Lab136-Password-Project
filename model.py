@@ -42,6 +42,7 @@ class Discriminator(nn.Module):
             
     def pre_train(self, p, G):
         passwords = random.sample(p.passwords_string, PRE_DISC_ITERS)
+        softmax = nn.LogSoftmax(dim=1)
         optimizer = torch.optim.SGD(self.parameters(), lr=0.1)
         for real in passwords:
             fake = G.generate_from(real[0])
@@ -59,6 +60,15 @@ class Discriminator(nn.Module):
             loss = fake_loss + real_loss
             loss.backward()
             optimizer.step()
+            
+    def test(self, password):
+        tensor = P.passwordToPretrainTensor(password).float()
+        tensor = self.embedding(tensor)
+        hidden = torch.zeros(self.layers, 1, self.hidden_size).to(device)
+        out, _ = self.gru(tensor, hidden)
+        loss = self.h2o(out[:,-1,:])
+        return loss
+        
     
     '''
     def calcGradientPenalty(self, real_data, fake_data, LAMBDA = .5):
@@ -134,7 +144,7 @@ class Generator(nn.Module):
         output, _ = self.gru(real_ebdd_pack, hidden)
         output = nn.utils.rnn.pad_packed_sequence(output, batch_first = True, total_length = seq_len)
         output = self.h2o(output[0])
-        output = F.log_softmax(output,dim=2)
+        output = F.softmax(output,dim=2)
         return output
 
     def initHiddenZeros(self):
