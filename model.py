@@ -70,55 +70,32 @@ class Discriminator(nn.Module):
         return loss
         
     
-    '''
-    def calcGradientPenalty(self, real_data, fake_data, LAMBDA = .5):
-        if real_data.size()[0] > fake_data.size()[0]:
-            fake_data = P.zeroPadding(fake_data.to(torch.device("cpu")), real_data.size(0)).to(device)
-        elif real_data.size()[0] < fake_data.size()[0]:
-            real_data = P.zeroPadding(real_data.to(torch.device("cpu")), fake_data.size(0)).to(device)
-        alpha = torch.rand(1).to(device)
-        interpolate = alpha * real_data + (1 - alpha) * fake_data
-        interpolate.requires_grad = True
-
-        output = self.discriminate(interpolate)
-
-        grad = torch.ones_like(interpolate).to(device)
-        gradients = torch.autograd.grad(
-                outputs=output,
-                inputs=interpolate,
-                grad_outputs=grad,
-                create_graph=True,
-                retain_graph=True,
-                only_inputs=True,
-            )[0]
-        # logging.debug(gradients.norm(2, dim=2))
-        penalty = ((gradients.norm(2, dim=2) - 1 ) ** 2).mean() * LAMBDA
-        return penalty
-    
-    def train(self, input_tensor, category):
-        hidden = self.initHidden()
-        self.zero_grad()
+class Discriminator_CNN(nn.Module):
+    def __init__(self, num_neurons, res_layers = 5, dropout = 0, max_len = 18, input_size = CHARMAP_LEN, output_size = 1):
+        super(Discriminator_CNN, self).__init__()
+        self.i2c = nn.Conv1d(input_size, num_neurons, 1)
+        self.res = []
+        self.c2o = nn.Linear(max_len * num_neurons, output_size)
         
-        for i in range(input_tensor.size()[0]):
-            output, hidden = self(input_tensor[i], hidden)
-            
-        loss = -output * category
-        # loss = loss * torch.sigmoid(100*loss)
-        loss.backward(retain_graph = True)
-
-        return output, loss.item()
+        for i in range(res_layers):
+            self.res.append(
+                nn.Sequential(
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2),
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2)
+                )
+            )
     
-    def discriminate(self, input_tensor):
-        hidden = self.initHidden()
-        for i in range(input_tensor.size()[0]):
-            output, hidden = self(input_tensor[i], hidden)
+    def forward(self, input, seq_len):
+        output = input.permute(0,2,1)
+        
+        for r in self.res:
+            output = output + 0.3 * r(output)
+        output = output.reshape(input.size()[0], -1)
+        output = self.c2o(output)
+        
         return output
-    '''
-    
-    
-    
-    
-    
     
     
     

@@ -57,9 +57,18 @@ if os.path.isfile(checkpoint_path) and train_from_ckpt:
     opt_d.load_state_dict(checkpoint['disc_optimizer_state_dict'])
     start_len = checkpoint['seq_len']
     start_iter = checkpoint['iter']
+    disc_loss = checkpoint['disc_loss']
+    gen_loss = checkpoint['gen_loss']
+    real_loss = checkpoint['real_loss']
 else:
+    logging.debug("Pretraining generator...")
+    g.pre_train(p)
+    logging.debug("Done.")
     start_len = 1
     start_iter = 1
+    disc_loss = []
+    gen_loss = []
+    real_loss = []
 
 for seq_len in range(start_len, MAX_LEN + 1):
     logging.info("---------- Adversarial Training with Seq Len %d, Batch Size %d ----------\n" % (seq_len, BATCH_SIZE))
@@ -73,7 +82,10 @@ for seq_len in range(start_len, MAX_LEN + 1):
                 'disc_state_dict': d.state_dict(),
                 'gen_optimizer_state_dict': opt_g.state_dict(),
                 'disc_optimizer_state_dict': opt_d.state_dict(),
-                'iter': i
+                'iter': i,
+                'gen_loss': gen_loss,
+                'disc_loss': disc_loss,
+                'real_loss': real_loss
                 }, checkpoint_path)
             logging.info("  *** Model Saved on Iter " + str(i) + " ***\n")
         
@@ -143,5 +155,10 @@ for seq_len in range(start_len, MAX_LEN + 1):
             opt_g.step()
 
         logging.debug("Done training generator.\n")
+
+        if i % SAVE_CHECKPOINTS_EVERY == 0:
+            real_loss.append(loss_real)
+            disc_loss.append(L)
+            gen_loss.append(loss_gen)
     
     start_iter = 1
