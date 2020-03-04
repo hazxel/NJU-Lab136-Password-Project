@@ -18,33 +18,35 @@ class Password:
     default_json_file_path = './data/rockyou_cleaned.json'
     
     def __init__(self, txt_file_path = default_txt_file_path, json_file_path = default_json_file_path, update_all = False):
-        logging.info("Initializing passwords...")
+        logger = logging.getLogger("data_prep.py")
+        
+        logger.info("Initializing passwords...")
         
         self.txt_file_path = txt_file_path
         self.json_file_path = json_file_path
         
         if os.path.isfile(json_file_path) and not(update_all):
-            logging.debug("Loading from existing json file...")
+            logger.debug("Loading from existing json file...")
             with open(json_file_path, 'r', encoding = 'utf-8') as pas:
                 self.passwords_string = json.load(pas)
         else:
-            logging.debug("Reading passwords from file...")
-            logging.debug("Converting unicode to ASCII and ignoring spaces...")
+            logger.debug("Reading passwords from file...")
+            logger.debug("Converting unicode to ASCII and ignoring spaces...")
 
             self.passwords_string = Password.readPass(self.txt_file_path)
 
-            logging.debug("Deleting empty passwords...")
+            logger.debug("Deleting empty passwords...")
             self.passwords_string = Password.deleteEmpty(self.passwords_string)
         
-            logging.debug("Saving to json file...")
+            logger.debug("Saving to json file...")
             with open(json_file_path, 'w',encoding='utf-8') as pas:
                 json.dump(self.passwords_string, pas, ensure_ascii = True)
             
-        #logging.debug("Converting string to tensor...")
+        #logger.debug("Converting string to tensor...")
         #self.passwords_tensor = Password.passToTensor(self.passwords_string)
         
         self.string_gen = self.inf_string_gen()
-        logging.info("Done initializing passwords.")
+        logger.info("Done initializing passwords.")
     
     def getPasswords(self):
         return self.passwords_string
@@ -57,7 +59,7 @@ class Password:
             random.shuffle(self.passwords_string)
             for i in range(0, len(self.passwords_string) - BATCH_SIZE + 1, BATCH_SIZE):
                 yield self.passwords_string[i : i + BATCH_SIZE]
-            logging.info("Current epoch done.")
+            logger.info("Current epoch done.")
             
     def inf_tensor_pack_gen(self, seq_len):
         while True:

@@ -4,13 +4,14 @@ import torch.nn.functional as F
 import random
 import logging
 import os
+import time
 
 from data_prep import Password as P
 from model import Generator, Discriminator
 from training_helper import *
 from config import *
 
-from sys import argv
+import sys
 from getopt import getopt
 
 ############################
@@ -18,28 +19,42 @@ from getopt import getopt
 ## python train.py -d -c  ##
 ############################
 
-logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
-                    level=logging.INFO,
-                    filename='test.log',
-                    filemode='a')
+logger_data = logging.getLogger("data_prep.py")
+logger_data.setLevel(level=logging.DEBUG)
+logger = logging.getLogger("train.py")
+logger.setLevel(level=logging.DEBUG)
+stream_handler = logging.StreamHandler(sys.stderr)
+stream_handler.setLevel(level=logging.INFO)
+
 checkpoint_path = DEFAULT_CHECKPOINT_PATH
 train_from_ckpt = True
 
-opts, args = getopt(argv[1:], "-h-r-l:-c:", ["help", "restart", "logging=", "checkpoint="])
+opts, args = getopt(sys.argv[1:], "-h-r-f-l:-c:", ["help", "restart", "log2file", "logging=", "checkpoint="])
 
 for opt_name, opt_value in opts:
     if opt_name in ('-h', '--help'):
         print("Ooops, we don't have help info now :)")
-    if opt_name in ('-r', '--restart'):
+    elif opt_name in ('-r', '--restart'):
         train_from_ckpt = False
-        logging.info("Restart training from scratch...")
-    if opt_name in ('-l', '--logging'):
+        print("Restart training from scratch...")
+    elif opt_name in ('-f', '--log2file'):
+        file_handler = logging.FileHandler('./log/' + time.strftime('%Y-%m-%d-%H-%M-%S',time.localtime(time.time())) + '.log')
+        file_handler.setLevel(level=logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        logger_data.addHandler(file_handler)
+    elif opt_name in ('-l', '--logging'):
         if opt_value == "debug":
-            logger.setLevel(logging.DEBUG)
-    if opt_name in ('-c', '--checkpoint_path'):
-        checkpoint_path = opt_value    
-    
-logging.info("Training on " + str(device) + ".")
+            stream_handler.setLevel(level=logging.DEBUG)
+    elif opt_name in ('-c', '--checkpoint_path'):
+        checkpoint_path = opt_value   
+
+logger.addHandler(stream_handler)
+logger_data.addHandler(stream_handler)
+
+
+logger.info("Training on " + str(device) + ".")
 
 g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE).to(device)
 d = Discriminator(DISC_HIDDEN_SIZE, DISC_NEURON_SIZE).to(device)
@@ -64,9 +79,9 @@ if os.path.isfile(checkpoint_path) and train_from_ckpt:
     gen_loss = checkpoint['gen_loss']
     real_loss = checkpoint['real_loss']
 else:
-    logging.debug("Pretraining generator...")
+    logger.debug("Pretraining generator...")
     g.pre_train(p)
-    logging.debug("Done.")
+    logger.debug("Done.")
     start_len = 1
     start_iter = 1
     disc_loss = []
@@ -74,7 +89,7 @@ else:
     real_loss = []
 
 for seq_len in range(start_len, MAX_LEN + 1):
-    logging.info("---------- Adversarial Training with Seq Len %d, Batch Size %d ----------\n" % (seq_len, BATCH_SIZE))
+    logger.info("---------- Adversarial Training with Seq Len %d, Batch Size %d ----------\n" % (seq_len, BATCH_SIZE))
     
     for i in range(start_iter, ITERS_PER_SEQ_LEN + 1):
                 
@@ -90,11 +105,11 @@ for seq_len in range(start_len, MAX_LEN + 1):
                 'disc_loss': disc_loss,
                 'real_loss': real_loss
                 }, checkpoint_path)
-            logging.info("  *** Model Saved on Iter " + str(i) + " ***\n")
+            logger.info("  *** Model Saved on Iter " + str(i) + " ***\n")
         
-        logging.debug("----------------- %d / %d -----------------\n" % (i, ITERS_PER_SEQ_LEN))
+        logger.debug("----------------- %d / %d -----------------\n" % (i, ITERS_PER_SEQ_LEN))
 
-        logging.debug("Training discriminator...\n")
+        logger.debug("Training discriminator...\n")
         
         d.requiresGrad()
         d.zero_grad()
@@ -111,13 +126,13 @@ for seq_len in range(start_len, MAX_LEN + 1):
                 # Genuine
                 disc_real = d(real, seq_len)
                 loss_real = -disc_real.mean()
-                logging.debug("real loss: "+str(loss_real.item()))
+                logger.debug("real loss: "+str(loss_real.item()))
                 L += loss_real
 
                 # Fake
                 disc_fake = d(fake, seq_len)
                 loss_fake = disc_fake.mean()
-                logging.debug("fake loss: "+str(loss_fake.item()))
+                logger.debug("fake loss: "+str(loss_fake.item()))
                 L += loss_fake
 
                 # Gradient penalty
@@ -133,18 +148,18 @@ for seq_len in range(start_len, MAX_LEN + 1):
                         only_inputs=True,
                     )[0]
                 loss_gp = ((gradients.norm(2, dim=2) - 1) ** 2).mean() * LAMBDA
-                logging.debug("grad loss: "+str(loss_gp.item()))
+                logger.debug("grad loss: "+str(loss_gp.item()))
                 L += loss_gp
 
                 L.backward(retain_graph=False)
                 opt_d.step()
                 
-                logging.debug("Critic Iter " + str(j+1) + " Loss: " + str(L.item()) + "\n")
+                logger.debug("Critic Iter " + str(j+1) + " Loss: " + str(L.item()) + "\n")
 
 
-        logging.debug("Done training discriminator.\n")    
+        logger.debug("Done training discriminator.\n")    
 
-        logging.debug("Training generator...")
+        logger.debug("Training generator...")
 
         d.requiresNoGrad()
 
@@ -153,11 +168,11 @@ for seq_len in range(start_len, MAX_LEN + 1):
             pred = g(data, seq_len)
             fake = get_train_gen(data, pred, seq_len)
             loss_gen = -d(fake, seq_len).mean()
-            logging.debug("Gen Iter " + str(j+1) + " Loss: "+str(loss_gen.item()))
+            logger.debug("Gen Iter " + str(j+1) + " Loss: "+str(loss_gen.item()))
             loss_gen.backward(retain_graph=False)
             opt_g.step()
 
-        logging.debug("Done training generator.\n")
+        logger.debug("Done training generator.\n")
 
         if i % SAVE_CHECKPOINTS_EVERY == 0:
             real_loss.append(loss_real)
