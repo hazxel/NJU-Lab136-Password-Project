@@ -18,8 +18,10 @@ from getopt import getopt
 ## python train.py -d -c  ##
 ############################
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s',
+                    level=logging.INFO,
+                    filename='test.log',
+                    filemode='a')
 checkpoint_path = DEFAULT_CHECKPOINT_PATH
 train_from_ckpt = True
 
