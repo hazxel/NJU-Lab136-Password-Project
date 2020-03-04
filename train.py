@@ -39,6 +39,7 @@ for opt_name, opt_value in opts:
     if opt_name in ('-c', '--checkpoint_path'):
         checkpoint_path = opt_value    
     
+logging.info("Training on " + str(device) + ".")
 
 g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE).to(device)
 d = Discriminator(DISC_HIDDEN_SIZE, DISC_NEURON_SIZE).to(device)
