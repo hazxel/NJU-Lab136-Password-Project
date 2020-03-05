@@ -1,0 +1,9 @@
+#BSUB -q e5v4p100ib
+#BSUB -n 4,8
+#BSUB -J PWDGAN
+#BSUB -o ./log/out.log
+#BSUB -e ./log/err.log
+#BSUB -gpu num=2
+
+/fsa/home/pcl_zhouby/miniconda3/envs/pytorch/bin/python train.py
+
