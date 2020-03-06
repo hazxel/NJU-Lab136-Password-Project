@@ -55,6 +55,7 @@ class Password:
         return iter(self.passwords_string)
     
     def inf_string_gen(self):
+        logger = logging.getLogger("data_prep.py")
         while True:
             random.shuffle(self.passwords_string)
             for i in range(0, len(self.passwords_string) - BATCH_SIZE + 1, BATCH_SIZE):
