@@ -40,9 +40,9 @@ g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE).to(device)
 g.load_state_dict(checkpoint['gen_state_dict'])
 
 logging.debug("Generating passwords...")
-gen_pass = g.generate_N(p, n_generate = gen_num)
+gen_pass = g.generate_N(p, n_generate = gen_num) #generate_rand_N
 logging.debug("Removing duplicate passwords...")
-gen_pass = set(gen_pass)
+#gen_pass = set(gen_pass) #set cannot be stored as json!
 
 if print_pass:
     logging.debug("{} passwords in total:".format(len(gen_pass)))

@@ -1,9 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+import random
+import numpy as np
+
 from config import *
 from data_prep import Password as P
-import random
 
 class Discriminator(nn.Module):
     def __init__(self, hidden_size, num_neurons, layers = 1, dropout = 0, input_size = CHARMAP_LEN, output_size = 1):
@@ -194,6 +197,35 @@ class Generator(nn.Module):
                         break
                     else:
                         letter = P.all_letters[topi]
+                        output_password += letter
+                    input_tensor = P.passwordToInputTensor(letter).to(device)
+                    
+            generate_list.append(output_password)
+            
+        return generate_list
+
+    def generate_rand_N(self, p, n_generate = 20, max_length = MAX_LEN):
+        generate_list = []
+        samples = random.sample(p.passwords_string, n_generate)
+
+        for i in range(n_generate):
+            start_letter = samples[i][0]
+            input_tensor = P.passwordToInputTensor(start_letter)
+            with torch.no_grad():
+                hidden = torch.rand(self.layers, 1, self.hidden_size).to(device)
+                output_password = start_letter
+
+                for c in range(max_length):
+                    output, hidden = self.gru(self.embedding(input_tensor), hidden)
+                    output = self.h2o(output)
+                    output = output.view(-1)
+                    output = F.softmax(output,dim=0)
+                    output = output.cpu().numpy()    
+                    index = np.random.choice(range(len(output)), p=output)
+                    if index == CHARMAP_LEN - 1:
+                        break
+                    else:
+                        letter = P.all_letters[index]
                         output_password += letter
                     input_tensor = P.passwordToInputTensor(letter).to(device)
                     
