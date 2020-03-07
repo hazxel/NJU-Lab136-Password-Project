@@ -56,8 +56,8 @@ logger_data.addHandler(stream_handler)
 
 logger.info("Training on " + str(device) + ".")
 
-g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE, 2).to(device)
-d = Discriminator(DISC_HIDDEN_SIZE, DISC_NEURON_SIZE, 2).to(device)
+g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE, GEN_LAYERS).to(device)
+d = Discriminator(DISC_HIDDEN_SIZE, DISC_NEURON_SIZE, DISC_LAYERS).to(device)
 
 opt_g = torch.optim.RMSprop(g.parameters(), lr=0.0002)
 opt_d = torch.optim.RMSprop(d.parameters(), lr=0.0002)

@@ -36,7 +36,7 @@ p = P()
 
 logging.debug("Loading generator...")
 checkpoint = torch.load(DEFAULT_CHECKPOINT_PATH, map_location = device)
-g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE).to(device)
+g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE,GEN_LAYERS).to(device)
 g.load_state_dict(checkpoint['gen_state_dict'])
 
 logging.debug("Generating passwords...")
