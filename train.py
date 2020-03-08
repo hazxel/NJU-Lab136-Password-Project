@@ -88,7 +88,7 @@ else:
     gen_loss = []
     real_loss = []
 
-for seq_len in range(start_len, MAX_LEN + 1):
+for seq_len in range(start_len, MAX_LEN + EXTRA_LEN + 1):
     logger.info("---------- Adversarial Training with Seq Len %d, Batch Size %d ----------\n" % (seq_len, BATCH_SIZE))
     
     for i in range(start_iter, ITERS_PER_SEQ_LEN + 1):
@@ -114,30 +114,31 @@ for seq_len in range(start_len, MAX_LEN + 1):
         d.requiresGrad()
         d.zero_grad()
         g.zero_grad()
+        sq = MAX_LEN if seq_len > MAX_LEN else seq_len
         for j in range(CRITIC_ITERS):
             with torch.backends.cudnn.flags(enabled=False):
                 L = 0
                 
                 data = next(batch_gen)
-                pred = g(data, seq_len)
-                real, fake = get_train_dis(data, pred, seq_len)
+                pred = g(data, sq)
+                real, fake = get_train_dis(data, pred, sq)
                 interpolate = get_interpolate(real, fake)
 
                 # Genuine
-                disc_real = d(real, seq_len)
+                disc_real = d(real, sq)
                 loss_real = -disc_real.mean()
                 logger.debug("real loss: "+str(loss_real.item()))
                 L += loss_real
 
                 # Fake
-                disc_fake = d(fake, seq_len)
+                disc_fake = d(fake, sq)
                 loss_fake = disc_fake.mean()
                 logger.debug("fake loss: "+str(loss_fake.item()))
                 L += loss_fake
 
                 # Gradient penalty
                 interpolate = torch.autograd.Variable(interpolate, requires_grad=True)
-                disc_interpolate = d(interpolate, seq_len)
+                disc_interpolate = d(interpolate, sq)
                 grad = torch.ones_like(disc_interpolate).to(device)
                 gradients = torch.autograd.grad(
                         outputs=disc_interpolate,
@@ -165,9 +166,9 @@ for seq_len in range(start_len, MAX_LEN + 1):
 
         for j in range(GEN_ITERS):
             data = next(batch_gen)
-            pred = g(data, seq_len)
-            fake = get_train_gen(data, pred, seq_len)
-            loss_gen = -d(fake, seq_len).mean()
+            pred = g(data, sq)
+            fake = get_train_gen(data, pred, sq)
+            loss_gen = -d(fake, sq).mean()
             logger.debug("Gen Iter " + str(j+1) + " Loss: "+str(loss_gen.item()))
             loss_gen.backward(retain_graph=False)
             opt_g.step()

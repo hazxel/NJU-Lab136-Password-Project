@@ -12,6 +12,7 @@ BATCH_SIZE = 16
 
 CHARMAP_LEN = 80 # EOS included (52 + 10 + 17 + 1 = 80)
 
+EXTRA_LEN = 4
 MAX_LEN = 18
 MIN_LEN = 4
 
