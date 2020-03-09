@@ -8,32 +8,53 @@ import numpy as np
 from config import *
 from data_prep import Password as P
 
-class Discriminator(nn.Module):
-    def __init__(self, hidden_size, num_neurons, layers = 1, dropout = 0, input_size = CHARMAP_LEN, output_size = 1):
-        super(Discriminator, self).__init__()
-
-        self.input_size = input_size
-        self.num_neurons = num_neurons
-        self.hidden_size = hidden_size
-        self.output_size = output_size
-        self.layers = layers
-        self.dropout = dropout
-        
-        self.embedding = nn.Linear(input_size, num_neurons)
-        self.gru = nn.GRU(num_neurons, hidden_size, layers, batch_first = True, dropout = dropout)
-        self.h2o = nn.Linear(self.hidden_size, self.output_size)
-
-    def forward(self, input, seq_len):
-        #output, hidden = self.gru(input.view(1,1,-1), self.hidden)
-        #output = self.h2o(output)
-        input = self.embedding(input)
-        hidden = self.initHidden(seq_len)
-        output, _ = self.gru(input, hidden) 
-        output = self.h2o(output[:,-1,:])
+class Discriminator_CNN(nn.Module):
+    def __init__(self, num_neurons, max_len = MAX_LEN + 1, input_size = CHARMAP_LEN, output_size = 1):
+        super(Discriminator_CNN, self).__init__()
+        self.i2c = nn.Conv1d(input_size, num_neurons, 1)
+        self.res1 = nn.Sequential(
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2),
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2)
+                )
+        self.res2 = nn.Sequential(
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2),
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2)
+                )
+        self.res3 = nn.Sequential(
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2),
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2)
+                )
+        self.res4 = nn.Sequential(
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2),
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2)
+                )
+        self.res5 = nn.Sequential(
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2),
+                    nn.ReLU(),
+                    nn.Conv1d(num_neurons, num_neurons, 5, padding=2)
+                )
+        self.c2o = nn.Linear(max_len * num_neurons, output_size)
+    
+    def forward(self, input, alpha = 0.3):
+        output = input.permute(0,2,1)
+        output = self.i2c(output)
+        output = output + alpha * self.res1(output)
+        output = output + alpha * self.res2(output)
+        output = output + alpha * self.res3(output)
+        output = output + alpha * self.res4(output)
+        output = output + alpha * self.res5(output)
+        output = output.reshape(input.size()[0], -1)
+        output = self.c2o(output)
         return output
-
-    def initHidden(self, seq_len):
-        return torch.zeros(self.layers, BATCH_SIZE*seq_len, self.hidden_size).to(device)
     
     def requiresGrad(self):
         for p in self.parameters():
@@ -42,42 +63,11 @@ class Discriminator(nn.Module):
     def requiresNoGrad(self):
         for p in self.parameters():
             p.requires_grad = False
-            
-    def pre_train(self, p, G):
-        passwords = random.sample(p.passwords_string, PRE_DISC_ITERS)
-        softmax = nn.LogSoftmax(dim=1)
-        optimizer = torch.optim.SGD(self.parameters(), lr=0.1)
-        for real in passwords:
-            fake = G.generate_from(real[0])
-            fake = P.passwordToPretrainTensor(fake).float()
-            fake = self.embedding(fake)
-            real = P.passwordToPretrainTensor(real).float()
-            real = self.embedding(real)
-            hidden = torch.zeros(self.layers, 1, self.hidden_size).to(device)
-            
-            fake_out, _ = self.gru(fake, hidden) 
-            real_out, _ = self.gru(real, hidden)
-            fake_loss = self.h2o(fake_out[:,-1,:])[0][0]
-            real_loss = -self.h2o(real_out[:,-1,:])[0][0]
-            
-            loss = fake_loss + real_loss
-            loss.backward()
-            optimizer.step()
-            
-    def test(self, password):
-        tensor = P.passwordToPretrainTensor(password).float()
-        tensor = self.embedding(tensor)
-        hidden = torch.zeros(self.layers, 1, self.hidden_size).to(device)
-        out, _ = self.gru(tensor, hidden)
-        loss = self.h2o(out[:,-1,:])
-        return loss
         
-    
-    
-    
-class Generator(nn.Module):
+
+class Generator_GRU(nn.Module):
     def __init__(self, hidden_size, num_neurons, layers = 1, dropout = 0, input_size = CHARMAP_LEN, output_size = CHARMAP_LEN):
-        super(Generator, self).__init__()
+        super(Generator_GRU, self).__init__()
         
         self.input_size = input_size
         self.num_neurons = num_neurons
