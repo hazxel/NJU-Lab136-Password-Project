@@ -38,6 +38,17 @@ def get_real(strings_in, seq_len):
         for j in range(l):
             real[i][j][P.letterToIndex(strings_in[i][j])] = 1
 
+    #realreal = torch.zeros(0, MAX_LEN+1, CHARMAP_LEN).to(device)
+
+    for i in range(1, seq_len):
+        real = torch.cat((
+            real,
+            torch.cat((
+                real[:BATCH_SIZE,:i+1,:],
+                torch.zeros(BATCH_SIZE, MAX_LEN-i, CHARMAP_LEN).to(device)
+                ),dim = 1)
+            ),dim = 0)
+
     return real
 
 def get_interpolate(real, fake):
