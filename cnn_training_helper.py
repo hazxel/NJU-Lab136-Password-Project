@@ -19,7 +19,7 @@ def get_fake(real, pred, seq_len):
         train_pred = torch.cat((
             train_pred,
             torch.cat((
-                real[:,:i,:],
+                real[:BATCH_SIZE,:i,:],
                 pred[:,i-1:i,:],
                 torch.zeros(BATCH_SIZE, MAX_LEN - i, CHARMAP_LEN).to(device)
                 ),dim = 1)
