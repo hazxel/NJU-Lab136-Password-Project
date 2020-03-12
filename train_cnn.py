@@ -7,15 +7,15 @@ import os
 import time
 
 from data_prep import Password as P
-from model import Generator, Discriminator
-from training_helper import *
+from cnn_model import Generator_GRU, Discriminator_CNN
+from cnn_training_helper import *
 from config import *
 
 import sys
 from getopt import getopt
 
 ############################
-## example:          ##
+## example:               ##
 ## python train.py -d -c  ##
 ############################
 
@@ -105,9 +105,9 @@ for seq_len in range(start_len, MAX_LEN + EXTRA_LEN + 1):
                 'disc_loss': disc_loss,
                 'real_loss': real_loss
                 }, checkpoint_path)
-            logger.info("         *** Model Saved on Iter " + str(i) + " ***\n")
+            logger.info("                   *** Model Saved on Iter " + str(i) + " ***\n")
         
-        logger.debug("----------------- %d / %d -----------------\n" % (i, ITERS_PER_SEQ_LEN))
+        logger.debug("            ----------------- %d / %d -----------------\n" % (i, ITERS_PER_SEQ_LEN))
 
         logger.debug("Training discriminator...\n")
         
