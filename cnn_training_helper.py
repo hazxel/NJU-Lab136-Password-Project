@@ -61,5 +61,5 @@ def get_interpolate(real, fake):
 
 def EOS_padding(shape):
     if (shape.size()[1] != 0):
-        shape = shape.scatter_(-1, torch.full([shape.size()[0], shape.size()[1],1], CHARMAP_LEN-1).long(), 1).to(device)
-    return shape
+        shape = shape.scatter_(-1, torch.full([shape.size()[0], shape.size()[1],1], CHARMAP_LEN-1).long(), 1)
+    return shape.to(device)
