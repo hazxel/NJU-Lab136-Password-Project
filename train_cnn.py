@@ -15,7 +15,7 @@ import sys
 from getopt import getopt
 
 ############################
-## example:          ##
+## example:               ##
 ## python train.py -d -c  ##
 ############################
 
@@ -105,9 +105,9 @@ for seq_len in range(start_len, MAX_LEN + EXTRA_LEN + 1):
                 'disc_loss': disc_loss,
                 'real_loss': real_loss
                 }, checkpoint_path)
-            logger.info("         *** Model Saved on Iter " + str(i) + " ***\n")
+            logger.info("                   *** Model Saved on Iter " + str(i) + " ***\n")
         
-        logger.debug("----------------- %d / %d -----------------\n" % (i, ITERS_PER_SEQ_LEN))
+        logger.debug("            ----------------- %d / %d -----------------\n" % (i, ITERS_PER_SEQ_LEN))
 
         logger.debug("Training discriminator...\n")
         
