@@ -22,7 +22,7 @@ def get_fake(real, pred, seq_len):
                 real[:BATCH_SIZE,:i,:],
                 pred[:,i-1:i,:],
                 #torch.zeros(BATCH_SIZE, MAX_LEN-i, CHARMAP_LEN).to(device)
-                torch.zeros(BATCH_SIZE, MAX_LEN-i, CHARMAP_LEN).scatter_(-1, torch.full([BATCH_SIZE, MAX_LEN-i, 1], CHARMAP_LEN-1).long(), 1).to(device)
+                EOS_padding(torch.zeros(BATCH_SIZE, MAX_LEN-i, CHARMAP_LEN))
                 ),dim = 1)
             ),dim = 0)
     return train_pred
@@ -58,3 +58,8 @@ def get_interpolate(real, fake):
     alpha = torch.rand(real.size()[0], 1, 1).to(device)
     alpha = alpha.expand(real.size())
     return torch.autograd.Variable(alpha * real + (1 - alpha) * fake).data
+
+def EOS_padding(shape):
+    if (shape.size()[1] != 0):
+        shape = shape.scatter_(-1, torch.full([shape.size()[0], shape.size()[1],1], CHARMAP_LEN-1).long(), 1).to(device)
+    return shape
