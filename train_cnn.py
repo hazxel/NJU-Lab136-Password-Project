@@ -7,8 +7,8 @@ import os
 import time
 
 from data_prep import Password as P
-from model import Generator, Discriminator
-from training_helper import *
+from cnn_model import Generator_GRU, Discriminator_CNN
+from cnn_training_helper import *
 from config import *
 
 import sys
