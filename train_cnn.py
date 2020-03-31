@@ -29,7 +29,7 @@ stream_handler.setLevel(level=logging.INFO)
 checkpoint_path = DEFAULT_CHECKPOINT_PATH
 train_from_ckpt = True
 
-opts, args = getopt(sys.argv[1:], "-h-r-f-l:-c:", ["help", "restart", "log2file", "logging=", "checkpoint="])
+opts, args = getopt(sys.argv[1:], "-h-r-f-l:-c:", ["help", "restart", "log2file", "logging=", "checkpoint_path="])
 
 for opt_name, opt_value in opts:
     if opt_name in ('-h', '--help'):
