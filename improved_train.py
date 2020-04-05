@@ -79,8 +79,6 @@ if os.path.isfile(checkpoint_path) and train_from_ckpt:
     gen_loss = checkpoint['gen_loss']
     real_loss = checkpoint['real_loss']
 else:
-    logger.debug("Pretraining generator...")
-    logger.debug("Done.")
     start_len = 1
     start_iter = 1
     disc_loss = []
