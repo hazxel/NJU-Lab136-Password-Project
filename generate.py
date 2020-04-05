@@ -4,7 +4,7 @@ import os
 import json
 
 from data_prep import Password as P
-from model import Generator
+from improved_model import Generator
 from config import *
 
 from sys import argv
@@ -13,11 +13,12 @@ from getopt import getopt
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+checkpoint_path = DEFAULT_CHECKPOINT_PATH
 output_path = DEFAULT_SAMPLE_PATH
 gen_num = 200
 print_pass = False
 
-opts, args = getopt(argv[1:], "-h-p-l:-o:-n:", ["help", "logging=", "output_path=", "number="])
+opts, args = getopt(argv[1:], "-h-p-l:-o:-n:-c:", ["help", "logging=", "output_path=", "number=", "checkpoint_path="])
 
 for opt_name, opt_value in opts:
     if opt_name in ('-h','--help'):
@@ -31,11 +32,13 @@ for opt_name, opt_value in opts:
         output_path = opt_value
     if opt_name in ('-n', '--number'):
         gen_num = int(opt_value)      
+    if opt_name in ('-c', '--checkpoint_path'):
+        checkpoint_path = opt_value
     
 p = P()
 
 logging.debug("Loading generator...")
-checkpoint = torch.load(DEFAULT_CHECKPOINT_PATH, map_location = device)
+checkpoint = torch.load(checkpoint_path, map_location = device)
 g = Generator(GEN_HIDDEN_SIZE, GEN_NEURON_SIZE,GEN_LAYERS).to(device)
 g.load_state_dict(checkpoint['gen_state_dict'])
 

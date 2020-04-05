@@ -179,3 +179,5 @@ for seq_len in range(start_len, MAX_LEN + EXTRA_LEN + 1):
             gen_loss.append(loss_gen)
     
     start_iter = 1
+
+logging.info("All Done.")

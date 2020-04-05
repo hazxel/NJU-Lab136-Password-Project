@@ -89,7 +89,7 @@ class Generator(nn.Module):
         self.h2o = nn.Linear(hidden_size, output_size)
 
     def forward(self, seq_len):
-        rand_input = torch.rand([BATCH_SIZE, 1, self.num_neurons]).expand([BATCH_SIZE, seq_len, self.num_neurons]).to(device)
+        rand_input = torch.randn([BATCH_SIZE, 1, self.num_neurons]).expand([BATCH_SIZE, seq_len, self.num_neurons]).to(device)
         output, _ = self.gru(rand_input, self.hidden)
         output = self.h2o(output)
         output = F.softmax(output,dim=2)
@@ -122,15 +122,16 @@ class Generator(nn.Module):
         
         return P.passwordToInputTensor(password)
 
-    def generate_N(self, n_generate = 20, max_length = MAX_LEN):
+    def generate_N(self, p, n_generate = 20, max_length = MAX_LEN):
         generate_list = []
 
         for i in range(n_generate):
-            rand_input = torch.rand(1, 1, self.num_neurons).to(device)
+            rand_input = torch.randn([1, 1, self.num_neurons]).to(device)
+            hidden = self.hidden[:,0:1,:]
             with torch.no_grad():
                 output_password = ""
                 for c in range(max_length):
-                    output, hidden = self.gru(rand_input, self.hidden)
+                    output, hidden = self.gru(rand_input, hidden)
                     output = self.h2o(output)
                     output = output.view(1,-1)
                     _, topi = output.topk(1)
