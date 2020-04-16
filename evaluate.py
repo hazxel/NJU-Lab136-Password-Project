@@ -55,7 +55,7 @@ intersection = in_test.intersection(in_training)
 print("  Among {} passwords generated:".format(len(gen_pass)))
 print("  - {} passwords are in test set({} in total)".format(len(in_test), len(real_pass)))
 print("  - {} passwords are in training set({} in total)".format(len(in_training), len(training_pass)))
-print("  - {}% generated password are in test set and not in training set".format((len(in_test) - len(intersection)) * 100.0 / len(gen_pass)))
+print("  - {}({}%) passwords are are in test set and not in training set".format(len(in_test) - len(intersection), (len(in_test) - len(intersection)) * 100.0 / len(gen_pass)))
 print("  - {}% password in test set are covered".format(len(in_test) * 100.0 / len(real_pass)))
 
 

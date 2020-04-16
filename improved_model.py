@@ -9,7 +9,7 @@ from config import *
 from data_prep import Password as P
 
 class Discriminator(nn.Module):
-    def __init__(self, hidden_size, num_neurons, layers = 1, dropout = 0, input_size = CHARMAP_LEN, output_size = 1):
+    def __init__(self, hidden_size, num_neurons, layers = 1, dropout = DEFAULT_DROPOUT, input_size = CHARMAP_LEN, output_size = 1):
         super(Discriminator, self).__init__()
 
         self.input_size = input_size
@@ -73,7 +73,7 @@ class Discriminator(nn.Module):
     
     
 class Generator(nn.Module):
-    def __init__(self, hidden_size, num_neurons, layers = 1, dropout = 0, input_size = CHARMAP_LEN, output_size = CHARMAP_LEN):
+    def __init__(self, hidden_size, num_neurons, layers = 1, dropout = DEFAULT_DROPOUT, input_size = CHARMAP_LEN, output_size = CHARMAP_LEN):
         super(Generator, self).__init__()
         
         self.input_size = input_size
