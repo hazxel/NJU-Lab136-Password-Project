@@ -6,7 +6,7 @@ Datasets are available here:
 
 Python package requirement:
 
-    pythoch
+    pytorch
     json
     unicodedata
     ...
