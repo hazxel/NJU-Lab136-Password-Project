@@ -126,8 +126,8 @@ class Generator(nn.Module):
         generate_list = []
 
         for i in range(n_generate):
-            rand_input = torch.randn([1, 1, self.num_neurons]).to(device)
-            hidden = self.hidden[:,0:1,:]
+            rand_input = torch.randn([1, 1, self.num_neurons]).to(device).contiguous()
+            hidden = self.hidden[:,0:1,:].contiguous()
             with torch.no_grad():
                 output_password = ""
                 for c in range(max_length):

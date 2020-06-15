@@ -42,6 +42,8 @@ with open(test_path, 'r', encoding = 'utf-8') as test_set:
 #real_pass = [Password.unicodeToAscii(password) for password in real_pass]
 real_pass = set(real_pass)
 
+print(len(real_pass))
+
 assert os.path.isfile(training_path)
 logging.debug("Loading training set...")
 with open(training_path, 'r', encoding = 'utf-8') as training_set:
@@ -57,5 +59,4 @@ print("  - {} passwords are in test set({} in total)".format(len(in_test), len(r
 print("  - {} passwords are in training set({} in total)".format(len(in_training), len(training_pass)))
 print("  - {}({}%) passwords are are in test set and not in training set".format(len(in_test) - len(intersection), (len(in_test) - len(intersection)) * 100.0 / len(gen_pass)))
 print("  - {}% password in test set are covered".format(len(in_test) * 100.0 / len(real_pass)))
-
 
